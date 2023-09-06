@@ -29,9 +29,20 @@ def print_player(player):
     for i in player:
         print(i)
 
+def count_dices(players):
+    count_dices = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+    for player in players:
+        dices = player.current_dices
+        if dices == []:
+            continue
+        for dice in dices:
+            count_dices[dice] += 1
+    return count_dices 
+
 def start_game(player_count, start_dice_count):
     players = create_players(player_count)
     set_dices(players, start_dice_count)
     print_player(players)
+    print(count_dices(players))
 
 start_game(4, 5)
