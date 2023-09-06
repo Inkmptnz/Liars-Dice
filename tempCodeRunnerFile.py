@@ -54,29 +54,13 @@ def start_game(player_count, start_dice_count):
     while no_liar:
         if (first_bet):
             print(dice_options(-1, player_count, start_dice_count))
-        break
 
 def dice_options(last_bet, player_count, start_dice_count):
     dice_permutation = []
     if last_bet == -1:
-        for count in range(1, player_count*start_dice_count + 1):
-            for dice in range(1, 7):
-                dice_permutation.append((count, dice))
-        return dice_permutation
-
-    for dice in range(last_bet[1] + 1, 7):
-        dice_permutation.append((last_bet[0], dice))
-
-    for count in range(last_bet[0] + 1, player_count*start_dice_count):
-        for dice in range(1, 6):
-            dice_permutation.append((count, dice))
+        for times in range(player_count*start_dice_count + 1):
+            for dice in range(6):
+                dice_permutation.append((times, dice))
     return dice_permutation
 
-
-
-
-
-
-
-
-
+print(dice_options(-1, 4, 5))
