@@ -57,7 +57,7 @@ def start_game(player_count, start_dice_count):
         current_player = i%player_count
         print(players[current_player])
         if (first_bet):
-            last_bet = make_a_bet()
+            last_bet = make_a_bet(dice_options(last_bet, player_count, start_dice_count))
             players[current_player].bets.append(last_bet)
             bets.append(last_bet)
             first_bet = False
@@ -80,7 +80,7 @@ def start_game(player_count, start_dice_count):
         if called_liar:
             break
 
-        last_bet = make_a_bet()
+        last_bet = make_a_bet(dice_options(last_bet, player_count, start_dice_count))
         players[current_player].bets.append(last_bet)
         bets.append(last_bet)
         i += 1
@@ -96,13 +96,14 @@ def called_a_liar(accused, caller, count_dices):
         accused.current_dice_count -= 1
     
 
-def make_a_bet():
-    last_bet = (-1, -1)
+def make_a_bet(dice_options):
     while True:
         try:
-            last_bet = [int(x) for x in input("Make a bet with format: dice_count,dice\n").split(",")]
-            print("Your bet is: ", last_bet[0], ", ", last_bet[1])
-            break
+            last_bet = tuple([int(x) for x in input("Make a bet with format: dice_count,dice\n").split(",")])
+            if last_bet in dice_options:
+                print("Your bet is: ", last_bet[0], ", ", last_bet[1])
+                break
+            print("Your Bet is not within the possibilities of the rule set. These are your current options: \n ", dice_options)
         except:
             print("The Input is invalid. Either you didn't used the comma incorrectly or you didnt give me two numbers. (Correct example: 1,2)")
     return last_bet
@@ -119,7 +120,7 @@ def dice_options(last_bet, player_count, start_dice_count):
     for dice in range(last_bet[1] + 1, 7):
         dice_permutation.append((last_bet[0], dice))
 
-    for count in range(last_bet[0] + 1, player_count*start_dice_count):
+    for count in range(last_bet[0] + 1, player_count*start_dice_count + 1):
         for dice in range(1, 6):
             dice_permutation.append((count, dice))
     return dice_permutation
