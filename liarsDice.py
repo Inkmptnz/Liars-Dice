@@ -50,94 +50,115 @@ def get_dice_count_in_game(players):
         sum += player.dice_count 
     return sum
 
-def start_game(players, player_count, start_dice_count, round):
+def auto_create_player(player_count, start_dice_count):
+    players = create_players(player_count)
+    set_dices(players, start_dice_count)
+    return players
+
+def start_game(players, round):
     if len(players) == 1:
         print(f"\n--- {players[0].name} has won! ---")
         return
     
-    print(f"--- Round {round} ---")
-    if players == []:
-        players = create_players(player_count)
-        set_dices(players, start_dice_count)
-
     players.sort()
+
+    print(f"--- Round {round} ---")
     print_players(players)
-    called_liar = False
+
     i = 0
     first_bet = True
     last_bet = (-1,-1)
-    bets = []
+
     while True:
-        current_player = i%len(players)
-        if (first_bet):
-            last_bet = make_a_bet(players[current_player], dice_options(last_bet, get_dice_count_in_game(players)))
-            players[current_player].bets.append(last_bet)
-            bets.append(last_bet)
-            first_bet = False
-            i += 1
-            continue
+        current_player_index = i%len(players)
+        current_player = players[current_player_index]
+
+        if not first_bet and is_player_calling_lie(players, current_player_index) :
+            looser = who_is_looser(players[current_player_index - 1], players[current_player_index], count_dices(players))
+            looser.dice_count -= 1
+            round_reset(looser, players, round)
+            break
+        
+        last_bet = make_a_bet(last_bet, current_player, get_dice_count_in_game(players))
+        current_player.bets.append(last_bet)
+        i += 1
             
         print("The last bet was: ", last_bet[0], ", ", last_bet[1])
 
-        while True:
-            anwser = input("Do you call a lie? y/n \n")
-            if anwser == "y":
-                looser = called_a_liar(players[current_player - 1], players[current_player], count_dices(players))
-                round_reset(looser, players, len(players), round)
-                called_liar = True
-                if len(players) > 1:
-                    print_players(players)
-                break
-            elif anwser == "n":
-                break
-            else:
-                print("You have to anwser either y or n")
-        if called_liar:
-            break
+        first_bet = False
 
-        last_bet = make_a_bet(players[current_player], dice_options(last_bet, get_dice_count_in_game(players)))
-        players[current_player].bets.append(last_bet)
-        bets.append(last_bet)
-        i += 1
+def is_player_calling_lie(players, current_player_index):
+    while True:
+        anwser = input("Do you call a lie? y/n \n")
+        if anwser == "y":
+            return True
+        elif anwser == "n":
+            return False
+        else:
+            print("You have to anwser either y or n")
 
-def round_reset(looser, players, player_count, round):
+def round_reset(looser, players, round):
     beginning_looser_order = looser.order
+
     if looser.dice_count <= 0:
         players.remove(looser)
+    
     for player in players:
         order = player.order
         player.order = ((order - beginning_looser_order) % len(players)) + 1
         player.dices = random_dices(player.dice_count)
-    
-    start_game(players, len(players), -1, round + 1)
+
+    start_game(players, round + 1)
 
 
-def called_a_liar(accused, caller, count_dices):
+def who_is_looser(accused, caller, count_dices):
     print(count_dices)
     accused_bet = accused.bets[-1]
+
     if count_dices[accused_bet[1]] >= accused_bet[0]:
-        print("The accuser is WRONG! Wrong accusations lead to a loose of a dice.")
-        caller.dice_count -= 1
+        print("The accuser is WRONG! Wrong accusations leads to a lost dice.")
         return caller
     else:
         print("He lied therefore he has to sacrifice a dice!")
-        accused.dice_count -= 1
         return accused
     
 
-def make_a_bet(current_player, dice_options):
+def make_a_bet(last_bet, current_player, dice_count_game):
+    is_first_bet = last_bet == (-1,-1)
     print(f"{current_player.name} make a bet!")
     while True:
         try:
-            last_bet = tuple([int(x) for x in input("Make a bet with format: dice_count,dice\n").split(",")])
-            if last_bet in dice_options:
-                print("Your bet is: ", last_bet[0], ", ", last_bet[1])
-                break
-            print("Your Bet is not within the possibilities of the rule set. These are your current options: \n ", dice_options)
+            current_bet = tuple([int(x) for x in input("Make a bet with format: dice_count,dice\n").split(",")])
+            if is_first_bet:
+                if does_bet_exist(current_bet, dice_count_game):
+                    print("Your bet is: ", current_bet[0], ", ", current_bet[1])
+                    return current_bet
+                continue
+
+            if does_bet_exist(current_bet, dice_count_game) and is_bet_possible(last_bet, current_bet, dice_count_game):
+                print("Your bet is: ", current_bet[0], ", ", current_bet[1])
+                return current_bet
+
         except:
             print("The Input is invalid. Either you didn't used the comma incorrectly or you didnt give me two numbers. (Correct example: 1,2)")
-    return last_bet
-            
+
+def does_bet_exist(bet, dice_count_game):
+    if bet[1] < 1 or bet[1] > 6:
+        print("Your dice doesn't exist.")
+        return False
+    
+    if bet[0] < 1 or bet[0] > dice_count_game:
+        print("There aren't even enough dice for your count.")
+        return False
+    
+    return True
+
+def is_bet_possible(last_bet, new_bet, dice_count_game):
+    if last_bet > new_bet:
+        print("Your bet is not within the possibilities of the rule set. These are your current options: \n", dice_options(last_bet, dice_count_game))
+        return False
+    
+    return True
 
 def dice_options(last_bet, dice_count_game):
     dice_permutation = []
@@ -147,7 +168,7 @@ def dice_options(last_bet, dice_count_game):
             for dice in range(1, 7):
                 dice_permutation.append((count, dice))
         return dice_permutation
-
+     
     for dice in range(last_bet[1] + 1, 7):
         dice_permutation.append((last_bet[0], dice))
 
@@ -156,12 +177,8 @@ def dice_options(last_bet, dice_count_game):
             dice_permutation.append((count, dice))
     return dice_permutation
 
-start_game([], 2, 1, 1)
+def main():
+    players = auto_create_player(2,1)
+    start_game(players, 1)
 
-
-
-
-
-
-
-
+main()
