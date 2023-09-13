@@ -1,13 +1,16 @@
 import random
+import statistic as ai
 
 class Player:
+    is_ai = True
     dices = []
     dice_count = 5
     bets = []
 
-    def __init__(self, name, order):
+    def __init__(self, name, order, is_ai):
         self.name = name
         self.order = order
+        self.is_ai = is_ai
     
     def __str__(self):
         return f"Name: {self.name}, Order: {self.order}, Dices: {str(self.dices)}, Dice count: {self.dice_count}"
@@ -18,7 +21,7 @@ class Player:
 def create_players(count):
     arr = []
     for i in range(count):
-        player = Player(f"Player {i+1}", i + 1)
+        player = Player(f"Player {i+1}", i + 1, False)
         arr.append(player)
     return arr
 
@@ -44,7 +47,7 @@ def count_dices(players):
             count_dices[dice] += 1
     return count_dices 
 
-def get_dice_count_in_game(players):
+def get_dice_count_ingame(players):
     sum = 0
     for player in players:
         sum += player.dice_count 
@@ -72,14 +75,24 @@ def start_game(players, round):
     while True:
         current_player_index = i%len(players)
         current_player = players[current_player_index]
+        calling_lie = False
+        if not first_bet and current_player.is_ai:
+            calling_lie = ai.ai_handler(True, last_bet, current_player, players, 1.5, 2)
+        elif not first_bet:
+            calling_lie = is_player_calling_lie(players, current_player_index)
 
-        if not first_bet and is_player_calling_lie(players, current_player_index) :
+        
+        if not first_bet and calling_lie:
             looser = who_is_looser(players[current_player_index - 1], players[current_player_index], count_dices(players))
             looser.dice_count -= 1
             round_reset(looser, players, round)
             break
         
-        last_bet = make_a_bet(last_bet, current_player, get_dice_count_in_game(players))
+        if current_player.is_ai:
+            last_bet = ai.ai_handler(False, last_bet, current_player, players, 1.5, 2)
+        else: 
+            last_bet = make_a_bet(last_bet, current_player, get_dice_count_ingame(players))
+        
         current_player.bets.append(last_bet)
         i += 1
             
@@ -88,6 +101,9 @@ def start_game(players, round):
         first_bet = False
 
 def is_player_calling_lie(players, current_player_index):
+    if players[current_player_index].is_ai:
+        return
+        ###
     while True:
         anwser = input("Do you call a lie? y/n \n")
         if anwser == "y":
@@ -126,6 +142,7 @@ def who_is_looser(accused, caller, count_dices):
 def make_a_bet(last_bet, current_player, dice_count_game):
     is_first_bet = last_bet == (-1,-1)
     print(f"{current_player.name} make a bet!")
+    
     while True:
         try:
             current_bet = tuple([int(x) for x in input("Make a bet with format: dice_count,dice\n").split(",")])
@@ -134,6 +151,7 @@ def make_a_bet(last_bet, current_player, dice_count_game):
                     print("Your bet is: ", current_bet[0], ", ", current_bet[1])
                     return current_bet
                 continue
+            
 
             if does_bet_exist(current_bet, dice_count_game) and is_bet_possible(last_bet, current_bet, dice_count_game):
                 print("Your bet is: ", current_bet[0], ", ", current_bet[1])
@@ -168,7 +186,7 @@ def dice_options(last_bet, dice_count_game):
             for dice in range(1, 7):
                 dice_permutation.append((count, dice))
         return dice_permutation
-     
+    
     for dice in range(last_bet[1] + 1, 7):
         dice_permutation.append((last_bet[0], dice))
 
@@ -178,7 +196,14 @@ def dice_options(last_bet, dice_count_game):
     return dice_permutation
 
 def main():
-    players = auto_create_player(2,1)
+    player1 = Player("Dieter Ai", 1, True)
+    player2 = Player("Fabi", 2, False)
+    player3 = Player("Adrian", 3, False)
+    
+    players = [player1, player2, player3]
+
+    set_dices(players, 5)
+
     start_game(players, 1)
 
 main()
