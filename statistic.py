@@ -36,16 +36,12 @@ def ai_handler(want_lie, last_bet, ai, players, increase_count_pow, change_count
         return ai_bet_decision(last_bet, ai, players, increase_count_pow, change_count_new_face_pow)
     
 def is_ai_calling_lie(last_bet, ai, players, increase_count_pow):
-    import liarsDice as ld
+    from liarsDice import get_dice_count_ingame, count_dices
     face = last_bet[1]
     dice_count = last_bet[0]
 
-    dict_dices = ld.count_dices([ai])
-    dice_count_ingame = ld.get_dice_count_ingame(players)
-
-    dice_count_ingame = ld.get_dice_count_ingame(players)
-    bet_count_porpotion =  dice_count / dice_count_ingame
-    ai_count  = dice_count + round(dict_dices[face] * pow((1 - bet_count_porpotion), increase_count_pow))
+    dict_dices = count_dices([ai])
+    dice_count_ingame = get_dice_count_ingame(players)
     
     if (last_bet == (-1, -1)):
         return False
@@ -56,28 +52,23 @@ def is_ai_calling_lie(last_bet, ai, players, increase_count_pow):
     dice_count_diff = dice_count_ingame - dice_count
     if ((dice_count - dict_dices[face]) > dice_count_diff/6 + sigma(dice_count_diff, 1/6, 1.64)):
         return True
-    
-    if (ai_count == dice_count):
-        return True
-    
+
     return False
     
 
 def ai_bet_decision(last_bet, ai, players, increase_count_pow, change_count_new_face_pow):
-    import liarsDice as ld
+    from liarsDice import get_dice_count_ingame, count_dices
+
     dice_count = last_bet[0]
     face = last_bet[1]
 
-    dice_count_ingame = ld.get_dice_count_ingame(players)
+    dice_count_ingame = get_dice_count_ingame(players)
     bet_count_porpotion =  dice_count / dice_count_ingame
-    
-    
 
     ai_face = face
     ai_count = dice_count + 1
-    dict_dices = ld.count_dices([ai])
-    
-    bet_dice_ratio =  dice_count / dice_count_ingame
+    dict_dices = count_dices([ai])
+
     
     if (last_bet == (-1, -1)):
         ai_face = highest_dice_count(dict_dices)
@@ -93,6 +84,8 @@ def ai_bet_decision(last_bet, ai, players, increase_count_pow, change_count_new_
         ai_count  = dice_count + round(dict_dices[face] * pow((1 - bet_count_porpotion), increase_count_pow))
     else:
         ai_count = dice_count + round(dict_dices[face] * pow((1 - bet_count_porpotion), change_count_new_face_pow))
+        if ai_count == dice_count:
+            ai_count += 1
         ai_face = highest_dice_count(dict_dices)
     
     ai_bet = (ai_count, ai_face)

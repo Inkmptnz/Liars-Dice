@@ -1,5 +1,5 @@
-import random
-import statistic as ai
+import random, sys, os
+from statistic import ai_handler
 
 class Player:
     is_ai = True
@@ -66,8 +66,21 @@ def start_game(players, round):
     players.sort()
 
     print(f"--- Round {round} ---")
-    print_players(players)
-
+    # print_players(players)
+    for player in players:
+        if not player.is_ai:
+            while True:
+                try:
+                    everyone_looking_away = input(f"If you are NOT {player.name} then look away. Press y to continue. \n")
+                    if everyone_looking_away == "y":
+                        print(player.dices)
+                        continue_input = input(f"Press c to continue. \n")
+                        if continue_input == "c":
+                            os.system("cls")
+                        break
+                except KeyboardInterrupt:
+                    sys.exit(1)
+            
     i = 0
     first_bet = True
     last_bet = (-1,-1)
@@ -76,8 +89,11 @@ def start_game(players, round):
         current_player_index = i%len(players)
         current_player = players[current_player_index]
         calling_lie = False
+
+        print(f"{current_player.name} it\'s your turn!")
+
         if not first_bet and current_player.is_ai:
-            calling_lie = ai.ai_handler(True, last_bet, current_player, players, 1.5, 2)
+            calling_lie = ai_handler(True, last_bet, current_player, players, 1.5, 2)
         elif not first_bet:
             calling_lie = is_player_calling_lie(players, current_player_index)
 
@@ -85,11 +101,12 @@ def start_game(players, round):
         if not first_bet and calling_lie:
             looser = who_is_looser(players[current_player_index - 1], players[current_player_index], count_dices(players))
             looser.dice_count -= 1
+            print_players(players)
             round_reset(looser, players, round)
             break
         
         if current_player.is_ai:
-            last_bet = ai.ai_handler(False, last_bet, current_player, players, 1.5, 2)
+            last_bet = ai_handler(False, last_bet, current_player, players, 1.5, 2)
         else: 
             last_bet = make_a_bet(last_bet, current_player, get_dice_count_ingame(players))
         
@@ -101,17 +118,19 @@ def start_game(players, round):
         first_bet = False
 
 def is_player_calling_lie(players, current_player_index):
-    if players[current_player_index].is_ai:
-        return
-        ###
     while True:
-        anwser = input("Do you call a lie? y/n \n")
-        if anwser == "y":
-            return True
-        elif anwser == "n":
-            return False
-        else:
-            print("You have to anwser either y or n")
+        try:
+            anwser = input("Do you call a lie? y/n \n")
+            if anwser == "y":
+                return True
+            elif anwser == "n":
+                return False
+            elif anwser == "b":
+                print_players(players)
+            else:
+                print("You have to anwser either y or n")
+        except KeyboardInterrupt:
+                sys.exit(1)
 
 def round_reset(looser, players, round):
     beginning_looser_order = looser.order
@@ -137,7 +156,6 @@ def who_is_looser(accused, caller, count_dices):
     else:
         print("He lied therefore he has to sacrifice a dice!")
         return accused
-    
 
 def make_a_bet(last_bet, current_player, dice_count_game):
     is_first_bet = last_bet == (-1,-1)
@@ -151,12 +169,12 @@ def make_a_bet(last_bet, current_player, dice_count_game):
                     print("Your bet is: ", current_bet[0], ", ", current_bet[1])
                     return current_bet
                 continue
-            
 
             if does_bet_exist(current_bet, dice_count_game) and is_bet_possible(last_bet, current_bet, dice_count_game):
                 print("Your bet is: ", current_bet[0], ", ", current_bet[1])
                 return current_bet
-
+        except KeyboardInterrupt:
+            sys.exit(1)
         except:
             print("The Input is invalid. Either you didn't used the comma incorrectly or you didnt give me two numbers. (Correct example: 1,2)")
 
@@ -205,5 +223,3 @@ def main():
     set_dices(players, 5)
 
     start_game(players, 1)
-
-main()
