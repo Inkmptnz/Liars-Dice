@@ -80,14 +80,16 @@ def ai_bet_decision(last_bet, ai, players, increase_count_pow, change_count_new_
     # 3 + 2 * (1 - 3/20)
     # 8 + 1 * (1 - 8/20) = 8.6 = 9
     # 8 + 1 * (1 - 8/20)^1,5 = 8.6 = 9
+    # 2 + (1 * (1-0.5)^1.5) = 2 + sqrt(0.5^3)
+    # 2 + (1 * (1-0.5)^1) = 2 + sqrt(0.5^3)
     if (face in ai.dices):
         ai_count  = dice_count + round(dict_dices[face] * pow((1 - bet_count_porpotion), increase_count_pow))
     else:
         ai_count = dice_count + round(dict_dices[face] * pow((1 - bet_count_porpotion), change_count_new_face_pow))
-        if ai_count == dice_count:
-            ai_count += 1
         ai_face = highest_dice_count(dict_dices)
     
+    if ai_count == dice_count:
+            ai_count += 1
     ai_bet = (ai_count, ai_face)
     return ai_bet
 
