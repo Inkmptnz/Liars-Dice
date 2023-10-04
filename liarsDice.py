@@ -25,6 +25,15 @@ def create_players(count):
         arr.append(player)
     return arr
 
+def randomize_order(players):
+    player_order = list(range(1, len(players) + 1))
+    random.shuffle(player_order)
+    i = 0
+    for player in players:
+        player.order = player_order[i]
+        i += 1
+     
+
 def set_dices(players, count_dices):
     for player in players:
         player.dices = random_dices(count_dices)
@@ -103,7 +112,7 @@ def start_game(players, round):
             looser.dice_count -= 1
             print_players(players)
             round_reset(looser, players, round)
-            break
+            return players[0]
         
         if current_player.is_ai:
             last_bet = ai_handler(False, last_bet, current_player, players, 1.5, 2)

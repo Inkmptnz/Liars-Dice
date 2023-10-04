@@ -31,11 +31,11 @@ def sigma(n, p, k):
 
 def ai_handler(want_lie, last_bet, ai, players, increase_count_pow, change_count_new_face_pow):
     if want_lie:
-        return is_ai_calling_lie(last_bet, ai, players, increase_count_pow)
+        return is_ai_calling_lie(last_bet, ai, players, 1.64)
     else:
         return ai_bet_decision(last_bet, ai, players, increase_count_pow, change_count_new_face_pow)
     
-def is_ai_calling_lie(last_bet, ai, players, increase_count_pow):
+def is_ai_calling_lie(last_bet, ai, players, ai_param_sigma):
     from liarsDice import get_dice_count_ingame, count_dices
     face = last_bet[1]
     dice_count = last_bet[0]
@@ -49,8 +49,9 @@ def is_ai_calling_lie(last_bet, ai, players, increase_count_pow):
     # 3 3 4 6 6
     # 6 3
     # 6 - 2 > (20 - 5) / 6 + sigma((20 - 5), 1/6, 1,64)
+    ## AI - FACTOR
     dice_count_diff = dice_count_ingame - dice_count
-    if ((dice_count - dict_dices[face]) > dice_count_diff/6 + sigma(dice_count_diff, 1/6, 1.64)):
+    if ((dice_count - dict_dices[face]) > dice_count_diff/6 + sigma(dice_count_diff, 1/6, ai_param_sigma)):
         return True
 
     return False
@@ -69,20 +70,14 @@ def ai_bet_decision(last_bet, ai, players, increase_count_pow, change_count_new_
     ai_count = dice_count + 1
     dict_dices = count_dices([ai])
 
-    
     if (last_bet == (-1, -1)):
         ai_face = highest_dice_count(dict_dices)
         ai_count = dict_dices[ai_face]
         return (ai_count, ai_face)
     
-    # 3 3 4 6 6
-    # 3 3
-    # 3 + 2 * (1 - 3/20)
-    # 8 + 1 * (1 - 8/20) = 8.6 = 9
-    # 8 + 1 * (1 - 8/20)^1,5 = 8.6 = 9
-    # 2 + (1 * (1-0.5)^1.5) = 2 + sqrt(0.5^3)
     # 2 + (1 * (1-0.5)^1) = 2 + sqrt(0.5^3)
     if (face in ai.dices):
+        ## AI - FACTOR: increase_count_pow & change_count_new_face_pow
         ai_count  = dice_count + round(dict_dices[face] * pow((1 - bet_count_porpotion), increase_count_pow))
     else:
         ai_count = dice_count + round(dict_dices[face] * pow((1 - bet_count_porpotion), change_count_new_face_pow))
